@@ -6,17 +6,59 @@
 
 using namespace std;
 
+
+// *************************************************
+//
+// Declarations
+//
+// *************************************************
+/*
+x, y, z coordinate structure
+*/
+
+struct coordination{
+double x;
+double y;
+double z;
+}
+
+/*
+vasp_read function: read a POSCAR file
+*/
+
 // compound_split would split a string to show how many elements in the
 // compound, and give the fraction of the compound
 map<string,double> compound_split(string const);
 
+
+// output input file for VASP
 void vasp_format(vector<vector<double> >&,vector<vector<double> >&,string,string,string);
 
-void siesta_format(vector<vector<int> >&,vector<vector<int> >&);
+
+// output input file for SIESTA
+void siesta_format(vector<vector<int> >&,vector<vector<int> >&,string,string,string);
+
+map<string,vector<vector<double> > > vasp_read(string const);
+
+//
+vector<vector<double> > frac2xyz(vector<vector<double> >, vector<vector<double> >);
+vector<coordination> frac2xyz(vector<vector<double> >, vector<coordination>);
+
+
+
+// *************************************************
+//
+// Main block
+//
+// *************************************************
+
+
 
 int main(){
 
-ofstream structure;
+
+// test block
+// ofstream structure;
 double lattice_[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
 double coord_[2][3]={{0,0,0},{0.5,0.5,0}};
 
@@ -34,7 +76,7 @@ for (int i=0; i< coord.size(); i++){
 		lattice[i][j] = coord_[i][j];
 	}
 }
-
+// end of test block
 
 
 // vector<vector<double> > lattice(lattice_);
@@ -48,6 +90,14 @@ structure.close();
 */
 return 0;
 }
+
+
+/*
+
+function to output vasp_format 
+
+*/
+
 
 void vasp_format(vector<vector<double> >& lattice,vector<vector<double> >& coord,string compound, string name="POSCAR",string type="direct"){
 /* 
@@ -105,6 +155,12 @@ vasp_pos<<endl;
 vasp_pos.close();
 }
 
+
+/*****
+
+function to split a compound name and extract element information
+
+****/
 map<string,double> compound_split(string const compound){
 	// input P, output {P:1.0}
 	map<string,double> ret;
@@ -152,3 +208,40 @@ map<string,double> compound_split(string const compound){
     //*/
 	return ret;
 }
+
+/*
+function: convert fractional coordinate to xyz using coordinate structure
+*/
+
+vector<coordination> frac2xyz(vector<vector<double> > lattice, vector<coordination> fraction){
+vector<coordination> ret(fraction.size());
+for (int i=0; i<fraction.size();i++){
+	ret[i].x= fraction[i].x*lattice[0][0] + fraction[i].y * lattice[1][0] + fraction[i].z * lattice[2][0];
+	ret[i].y= fraction[i].x*lattice[0][1] + fraction[i].y * lattice[1][1] + fraction[i].z * lattice[2][1];
+	ret[i].z= fraction[i].x*lattice[0][2] + fraction[i].y * lattice[1][2] + fraction[i].z * lattice[2][2];
+}
+return ret;
+}
+
+/*
+function: convert fractional coordinate to xyz in the form of vectors
+*/
+
+vector<vector<double> > frac2xyz(vector<vector<double> > lattice, vector<vector<double> > fraction){
+vector<coordination> ret(fraction.size(),vector<double>(3));
+for (int i=0; i<fraction.size();i++){
+	ret[i][0]= fraction[i][0]*lattice[0][0] + fraction[i][1] * lattice[1][0] + fraction[i][2] * lattice[2][0];
+	ret[i][1]= fraction[i][0]*lattice[0][1] + fraction[i][1] * lattice[1][1] + fraction[i][2] * lattice[2][1];
+	ret[i][2]= fraction[i][0]*lattice[0][2] + fraction[i][1] * lattice[1][2] + fraction[i][2] * lattice[2][2];
+}
+return ret;
+}
+
+
+map<string,vector<vector<double> > > vasp_read(string const file_name){
+	ifstream vasp_pos;
+	vasp_pos.open(file_name);
+	string line;
+	vasp_pos
+}
+
