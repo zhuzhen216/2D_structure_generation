@@ -54,6 +54,12 @@ vector<vector<double> > repeat_xyz(vector<vector<double> >, vector<vector<double
 
 // distance
 double comp_dist(vector<double>, vector<double>);
+vector<vector<double> > dist_map(vector<vector<double> > lat, vector<vector<double> > coords, int dims)；
+
+vector<vector<pair<int,double> > > get_dist_pair(vector<vector<double> > dist_matrix);
+
+bool pair_compare(pair<int, double> pair1, pair<int,double> pair2); // to compare two pair distance
+
 //
 
 
@@ -577,4 +583,55 @@ vector<vector<double> > dist_map (vector<vector<double> > lat, vector<vector<dou
 		return ret_dist;
 	}
 	
+}
+
+/* 
+function: dist_map matrix to pair matrix
+input:
+	dist_map
+output:
+	pair_map_matrix
+*/
+vector<vector<pair<int,double> > > get_dist_pair(vector<vector<double> > dist_matrix)
+{
+	int n_atm = dist_matrix.size();
+	vector<vector<pair<int,double> > > ret_dist_pair(n_atm,vector<pair <int,double>>(n_atm));
+	for (int i=0; i<n_atm; i++)
+	{
+		for (int j=i; j< n_atm; j++)
+		{
+			pair<int,double> temp(j,dist_matrix[i][j]);
+			ret_dist_pair[i][j]=temp;
+			if (i!=j)
+			{
+				ret_dist_pair[j][i]=ret_dist_pair[i][j];
+			}
+		}
+	}
+	return ret_dist_pair;
+}
+
+bool pair_compare(pair<int, double> pair1, pair<int,double> pair2)
+{
+	return pair1.second < pair2.second;
+}
+
+/*
+function to obtain the neighbor map
+
+input: 
+	index_dist_pairs: dist_pair_map, which is computed by get_dist_pair above
+	n: number of neighbores to output
+output: a n_atm x n_neig matrix, storing the index of nearest neighbores
+
+*/
+vector<vector<int> > neigb_indexes(vector<vector<pair<int, double> > > index_dist_pairs, int n)
+{
+	int natm = index_dist_pairs.size();
+	vector<vector<int> > ret_neigbs(natm,vector<int>(n));
+	
+	for (int i_atm = 0; i_atm < natm; i_atm++)
+	{
+		
+	}
 }
