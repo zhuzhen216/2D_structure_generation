@@ -4,6 +4,10 @@
 #include<fstream>
 #include<map>
 #include<cstdlib>
+#include<stdexcept>
+#include<cmath>
+#include<climits>
+#include<utility>
 
 using namespace std;
 
@@ -54,13 +58,19 @@ vector<vector<double> > repeat_xyz(vector<vector<double> >, vector<vector<double
 
 // distance
 double comp_dist(vector<double>, vector<double>);
-vector<vector<double> > dist_map(vector<vector<double> > lat, vector<vector<double> > coords, int dims)；
+vector<vector<double> > dist_map(vector<vector<double> > lat, vector<vector<double> > coords, int dims);
 
 vector<vector<pair<int,double> > > get_dist_pair(vector<vector<double> > dist_matrix);
 
-bool pair_compare(pair<int, double> pair1, pair<int,double> pair2); // to compare two pair distance
+bool pair_compare(const pair<int, double>& pair1, const pair<int,double>& pair2); // to compare two pair distance
 
-//
+// neighbors
+vector<vector<int> > n_neigb_indexes(vector<vector<pair<int, double> > > index_dist_pairs, int n);
+
+// generators
+vector<int> bin_array(unsigned long long tot, int natm);
+
+
 
 
 
@@ -79,8 +89,8 @@ int main(){
 
 // test block
 // ofstream structure;
-double lattice_[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
-double coord_[2][3]={{0,0,0},{0.5,0.5,0}};
+double lattice_[3][3] = {{5.0,0,0},{0,3.3,0},{0,0,1.0}};
+double coord_[4][3]={{0,0,0},{0.16667,0.5,0},{0.5,0.5,0},{0.66667,0.0,0.0}};
 
 vector<vector<double> > lattice(3,vector<double>(3));
 vector<vector<double> > coord(2,vector<double>(3));
@@ -113,21 +123,52 @@ cout << lattice_repeated[2][0] << "\t" << lattice_repeated[2][1] << "\t" << latt
 // cout << coord[0][0] << "\t" << coord[0][1]  << "\t" << coord[0][2] <<endl;
 // cout << coord[1][0] << "\t" << coord[1][1]  << "\t" << coord[1][2] <<endl;
 //vector<vector<double> > coords_repeated;
-//vector<vector<double> > lattice_repeated(3,vector<double>(3));
+
+/*
+vector<vector<double> > lattice_repeated(3,vector<double>(3));
 vector<vector<double> > xyz_repeated;
-//lattice_repeated = repeat_lattice(lattice,3,3,3);
+lattice_repeated = repeat_lattice(lattice,2,2,1);
 // xyz_repeated= repeat_coordinate(lattice,coord,3,3,3,0);
-xyz_repeated= repeat_xyz(lattice,coord,3,3,3);
+xyz_repeated= repeat_xyz(lattice,coord,2,2,1);
+
 //xyz_repeated = frac2xyz(lattice_repeated,coords_repeated);
+*/
+/* print the repeated xyz files
 for (int i = 0; i<27; i++){
 cout << xyz_repeated[i][0] << "\t" << xyz_repeated[i][1]  << "\t" << xyz_repeated[i][2] <<endl;
+*/
+
+
 //cout << coords_repeated[i][0] << "\t" << coords_repeated[i][1]  << "\t" << coords_repeated[i][2] <<endl;
 //cout << coords_repeated[i][0] << "\t" << coords_repeated[i][1] << "\t" << coords_repeated[i][2] <<endl;
-}
-
-
 
 // end of test block
+
+
+//**************************
+//test dist_map (vector<vector<double> > lat, vector<vector<double> > coords, int dims)
+
+vector<vector<double> > lattice_repeated(3,vector<double>(3));
+vector<vector<double> > xyz_repeated;
+lattice_repeated = repeat_lattice(lattice,2,1,1);
+xyz_repeated= repeat_xyz(lattice,coord,2,1,1);
+
+for (int i = 0; i<xyz_repeated.size(); i++){
+cout << xyz_repeated[i][0] << "\t" << xyz_repeated[i][1]  << "\t" << xyz_repeated[i][2] <<endl;
+}
+cout<<endl;
+vector<vector<double> > dist_bet_atoms(xyz_repeated.size(),vector<double>(xyz_repeated.size()));
+
+dist_bet_atoms=dist_map(lattice_repeated,xyz_repeated,2);
+
+for (int i = 0; i<xyz_repeated.size(); i++){
+	for(int j=0;j<xyz_repeated.size();j++){
+		cout << dist_bet_atoms[i][j] << "\t"; 
+	}
+cout<<endl;
+}
+// end of test dist_map
+//***************************/
 
 
 // vector<vector<double> > lattice(lattice_);
@@ -464,7 +505,7 @@ vector<vector<double> > repeat_xyz(vector<vector<double> > lat, vector<vector<do
 */
 
 double comp_dist(vector<double> pos1, vector<double> pos2){
-	return sqrt((pos1[0]-pos2[0])**2+(pos1[1]-pos2[1])**2+(pos1[2]-pos2[2])**2);
+	return sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
 }
 
 vector<vector<double> > dist_map (vector<vector<double> > lat, vector<vector<double> > coords, int dims){
@@ -487,8 +528,8 @@ vector<vector<double> > dist_map (vector<vector<double> > lat, vector<vector<dou
 	{
 		// assume along a1 direction
 		// generate a |_|c|_| box
-		vector<vector<double> > rep_m<coords.size(),vector<double>(3)>; // -a1
-		vector<vector<double> > rep_p<coords.size(),vector<double>(3)>; // +a1
+		vector<vector<double> > rep_m(coords.size(),vector<double>(3)); // -a1
+		vector<vector<double> > rep_p(coords.size(),vector<double>(3)); // +a1
 		for (int i=0; i< coords.size(); i++)
 		{
 			rep_m[i][0]= coords[i][0]-lat[0][0];
@@ -585,6 +626,8 @@ vector<vector<double> > dist_map (vector<vector<double> > lat, vector<vector<dou
 	
 }
 
+
+
 /* 
 function: dist_map matrix to pair matrix
 input:
@@ -592,16 +635,18 @@ input:
 output:
 	pair_map_matrix
 */
+
+/*
 vector<vector<pair<int,double> > > get_dist_pair(vector<vector<double> > dist_matrix)
 {
 	int n_atm = dist_matrix.size();
-	vector<vector<pair<int,double> > > ret_dist_pair(n_atm,vector<pair <int,double>>(n_atm));
+	vector<vector<pair<int,double> > > ret_dist_pair(n_atm,vector<pair<int,double> >(n_atm));
 	for (int i=0; i<n_atm; i++)
 	{
 		for (int j=i; j< n_atm; j++)
 		{
-			pair<int,double> temp(j,dist_matrix[i][j]);
-			ret_dist_pair[i][j]=temp;
+			pair<int,double> ret_dist_pair[i][j]=make_pair(j,dist_matrix[i][j]);
+			// ret_dist_pair[i][j]=temp;
 			if (i!=j)
 			{
 				ret_dist_pair[j][i]=ret_dist_pair[i][j];
@@ -611,27 +656,175 @@ vector<vector<pair<int,double> > > get_dist_pair(vector<vector<double> > dist_ma
 	return ret_dist_pair;
 }
 
-bool pair_compare(pair<int, double> pair1, pair<int,double> pair2)
+*/
+
+bool pair_compare(const pair<int, double> &pair1, const pair<int,double> &pair2)
 {
-	return pair1.second < pair2.second;
+	return (pair1.second < pair2.second);
 }
 
 /*
-function to obtain the neighbor map
+function to obtain the the first n nearest neighbors and return their indexes;
 
 input: 
 	index_dist_pairs: dist_pair_map, which is computed by get_dist_pair above
-	n: number of neighbores to output
+	n: number of neighbors to output
 output: a n_atm x n_neig matrix, storing the index of nearest neighbores
 
 */
-vector<vector<int> > neigb_indexes(vector<vector<pair<int, double> > > index_dist_pairs, int n)
+
+vector<vector<int> > n_neigb_indexes(vector<vector<pair<int, double> > >& index_dist_pairs, int n)
 {
 	int natm = index_dist_pairs.size();
-	vector<vector<int> > ret_neigbs(natm,vector<int>(n));
+	// need to raise an exception if n > natm - 1;
+	if (n>=natm)
+	{
+		throw out_of_range("Neighboring atoms more than total!");
+	}
+	
+	vector<vector<int> > ret_neighbs(natm,vector<int>(n));
 	
 	for (int i_atm = 0; i_atm < natm; i_atm++)
 	{
-		
+		// sort the pair_list
+		sort(index_dist_pairs[i_atm].begin(),index_dist_pairs[i_atm].end(),pair_compare);
+		for (int i_neighb=0;i_neighb<n;i_neighb++)
+		{
+			ret_neighbs[i_atm][i_neighb] = index_dist_pairs[i_atm][i_neighb+1].first;
+		}
+	}
+	return ret_neighbs;
+}
+
+// end function n_neigb_indexes_dist
+
+/*
+function to obtain the the first n nearest neighbors and return their indexes 
+and distances
+
+input: 
+	index_dist_pairs: dist_pair_map, which is computed by get_dist_pair above
+	n: number of neighbors to output
+
+output: a n_atm x n_neig matrix, storing the index of nearest neighbores and their distance
+to center atoms
+
+*/
+
+vector<vector<pair<int, double> > > n_neigb_indexes_dist(vector<vector<pair<int, double> > >& index_dist_pairs, int n)
+{
+	int natm = index_dist_pairs.size();
+	// need to raise an exception if n > natm - 1;
+	if (n>=natm)
+	{
+		throw out_of_range("Neighboring atoms more than total!");
+	}
+	
+	vector<vector<pair<int,double> > > ret_neighbs(natm,vector<pair<int, double> >(n));
+	
+	for (int i_atm = 0; i_atm < natm; i_atm++)
+	{
+		// sort the pair_list
+		sort(index_dist_pairs[i_atm].begin(),index_dist_pairs[i_atm].end(),pair_compare);
+		for (int i_neighb=0;i_neighb<n;i_neighb++)
+		{
+			ret_neighbs[i_atm][i_neighb] = index_dist_pairs[i_atm][i_neighb+1];
+		}
+	}
+	return ret_neighbs;
+}
+
+// end function n_neigb_indexes
+
+
+vector<int> bin_array(unsigned long long tot, int natm)
+{
+	vector<int> ret(natm,0);
+	for (int i=1; i<natm; i++){
+		ret[i] = (int)tot%2;
+		tot /= 2;
+	}
+	return ret;
+}
+
+
+/*
+
+structure generator
+
+inputs:
+	neighb_indexes: output of n_neigb_indexes;
+	lattice vectors: structural infomation (supercell)
+	coordinates: initially in xy plane (or z=0)
+	type:
+		type 0: center +(-), neighbor --+ (++-)
+		type 1: ++- or --+ black phosphorene
+		type 2: +++ or --- blue phosphorene
+
+outputs:
+	xyz files or POSCAR files
+	
+required functions:
+	void vasp_format(vector<vector<double> >& lattice,vector<vector<double> >& coord,string compound, string name="POSCAR",string type="direct")
+	
+
+*/
+
+
+void generator(vector<vector<int> > neighb_indexes, vector<vector<double> >lat, vector<vector<double> > coords, int type)
+{
+	// naive implementation
+	// the idea is 
+	int natm = neighb_indexes.size();
+	unsigned long long tot=1;
+	for (int i_atm=1; i_atm < natm; i_atm++)
+	{
+		tot *= 2;
+	}
+	
+	for (unsigned long long cur_tot = tot/2-1; cur_tot < tot; cur_tot++)
+	{
+		int allotrope_count=0;
+		vector<int> temp(natm);
+		temp = bin_array(cur_tot,natm);
+		int count = 0;
+		for (int j=1; j<natm; j++)
+		{
+			count+=temp[j];
+		}
+		if (count!=natm/2) continue;
+		int count_correct = 0;
+		for (int j=0; j<natm; j++)
+		{
+			int z_neib = 0;
+			int neib_1 = temp[neighb_indexes[j][0]];
+			int neib_2 = temp[neighb_indexes[j][1]];
+			int neib_3 = temp[neighb_indexes[j][2]];
+			z_neib = neib_1 + neib_2 + neib_3 + temp[j];
+			if (type == 2)
+			{
+				if (z_neib!=2)
+				{
+					break;
+				}
+			}
+			else if (type == 3 || type == 1)
+			{
+				if (z_neib==0 || z_neib==2 || z_neib==4)
+				{
+					break;
+				}
+			}
+			count_correct++;
+		}
+		if (count_correct==natm) 
+		{
+			for (int i_atm=0;i_atm<natm;i_atm++)
+			{
+				coords[i_atm][2]=temp[i_atm];
+			}
+			vasp_format(lat,coords,"P","POSCAR"+to_string(allotrope_count),"c");
+			allotrope_count++;
+		}
 	}
 }
